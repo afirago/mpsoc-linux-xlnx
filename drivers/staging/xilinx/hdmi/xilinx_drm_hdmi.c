@@ -841,7 +841,7 @@ static void xilinx_drm_hdmi_mode_set(struct drm_encoder *encoder,
 	/* Disable TX TDMS clock */
 	XVphy_Clkout1OBufTdsEnable(VphyPtr, XVPHY_DIR_TX, (FALSE));
 
-	VmId = XVidC_GetVideoModeIdWBlanking(&vt, mode->vrefresh, FALSE);
+	VmId = XVidC_GetVideoModeId(vt.HActive, vt.VActive, mode->vrefresh, FALSE);
 
 	hdmi_dbg("VmId = %d\n", VmId);
 	if (VmId == XVIDC_VM_NOT_SUPPORTED) { //no match found in timing table
@@ -849,7 +849,9 @@ static void xilinx_drm_hdmi_mode_set(struct drm_encoder *encoder,
 		VmId = XVIDC_VM_CUSTOM;
 		HdmiTxSsVidStreamPtr->FrameRate = mode->vrefresh;
 		HdmiTxSsVidStreamPtr->Timing = vt; //overwrite with drm detected timing
+#ifdef DEBUG
 		XVidC_ReportTiming(&HdmiTxSsVidStreamPtr->Timing, FALSE);
+#endif
 	}
 
 	ColorDepth = HdmiTxSsPtr->Config.MaxBitsPerPixel;
