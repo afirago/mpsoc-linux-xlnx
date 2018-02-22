@@ -50,6 +50,7 @@
 struct clk *clk_gpu;
 struct clk *clk_gpu_pp0;
 struct clk *clk_gpu_pp1;
+mali_bool clk_enabled;
 #endif
 
 #if defined(CONFIG_MALI400_PROFILING) && defined(CONFIG_MALI_DVFS)
@@ -279,6 +280,46 @@ struct file_operations mali_fops = {
 	.compat_ioctl = mali_ioctl,
 	.mmap = mali_mmap
 };
+
+static int mali_enable_clk(void)
+{
+#if defined(CONFIG_ARCH_ZYNQMP)
+	int err = 0;
+
+	if (clk_enabled)
+		return 0;
+
+	clk_enabled = MALI_TRUE;
+	err = clk_prepare_enable(clk_gpu);
+	if (err) {
+		MALI_PRINT_ERROR(("Could not enable clock for GP\n\r"));
+		return err;
+	}
+	err = clk_prepare_enable(clk_gpu_pp0);
+	if (err) {
+		MALI_PRINT_ERROR(("Could not enable clock for PP0\n\r"));
+		return err;
+	}
+	err = clk_prepare_enable(clk_gpu_pp1);
+	if (err) {
+		MALI_PRINT_ERROR(("Could not enable clock for PP1\n\r"));
+		return err;
+	}
+#endif
+	return 0;
+}
+
+static void mali_disable_clk(void)
+{
+#if defined(CONFIG_ARCH_ZYNQMP)
+	if (clk_enabled) {
+		clk_enabled = MALI_FALSE;
+		clk_disable_unprepare(clk_gpu);
+		clk_disable_unprepare(clk_gpu_pp0);
+		clk_disable_unprepare(clk_gpu_pp1);
+	}
+#endif
+}
 
 #if MALI_ENABLE_CPU_CYCLES
 void mali_init_cpu_time_counters(int reset, int enable_divide_by_64)
@@ -591,18 +632,19 @@ static int mali_probe(struct platform_device *pdev)
 	clk_gpu = devm_clk_get(&pdev->dev, "gpu");
 	if (IS_ERR(clk_gpu))
 		return PTR_ERR(clk_gpu);
-	clk_prepare_enable(clk_gpu);
 
 	clk_gpu_pp0 = devm_clk_get(&pdev->dev, "gpu_pp0");
 	if (IS_ERR(clk_gpu_pp0))
 		return PTR_ERR(clk_gpu_pp0);
-	clk_prepare_enable(clk_gpu_pp0);
 
 	clk_gpu_pp1 = devm_clk_get(&pdev->dev, "gpu_pp1");
 	if (IS_ERR(clk_gpu_pp1))
 		return PTR_ERR(clk_gpu_pp1);
-	clk_prepare_enable(clk_gpu_pp1);
 #endif
+
+	err = mali_enable_clk();
+	if (err)
+		return err;
 	if (_MALI_OSK_ERR_OK == _mali_osk_wq_init()) {
 		/* Initialize the Mali GPU HW specified by pdev */
 		if (_MALI_OSK_ERR_OK == mali_initialize_subsystems()) {
@@ -630,18 +672,13 @@ static int mali_probe(struct platform_device *pdev)
 		_mali_osk_wq_term();
 	}
 
-#if defined(CONFIG_ARCH_ZYNQMP)
-	clk_disable_unprepare(clk_gpu);
-	clk_disable_unprepare(clk_gpu_pp0);
-	clk_disable_unprepare(clk_gpu_pp1);
-#endif
-
 #ifdef CONFIG_MALI_DEVFREQ
 	mali_devfreq_term(mdev);
 devfreq_init_failed:
 	mali_pm_metrics_term(mdev);
 pm_metrics_init_failed:
 	clk_disable_unprepare(mdev->clock);
+	mali_disable_clk();
 clock_prepare_failed:
 	clk_put(mdev->clock);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) && defined(CONFIG_OF) \
@@ -704,9 +741,7 @@ static int mali_remove(struct platform_device *pdev)
 
 #if defined(CONFIG_ARCH_ZYNQMP)
 	/* Remove clock */
-	clk_disable_unprepare(clk_gpu);
-	clk_disable_unprepare(clk_gpu_pp0);
-	clk_disable_unprepare(clk_gpu_pp1);
+	mali_disable_clk();
 #endif
 
 	return 0;
@@ -813,6 +848,7 @@ static int mali_driver_runtime_suspend(struct device *dev)
 		MALI_DEBUG_PRINT(4, ("devfreq_suspend_device: stop devfreq monitor\n"));
 		devfreq_suspend_device(mdev->devfreq);
 #endif
+		mali_disable_clk();
 
 		return 0;
 	} else {
@@ -822,6 +858,11 @@ static int mali_driver_runtime_suspend(struct device *dev)
 
 static int mali_driver_runtime_resume(struct device *dev)
 {
+	int err ;
+
+	err = mali_enable_clk();
+	if (err)
+		return err;
 #ifdef CONFIG_MALI_DEVFREQ
 	struct mali_device *mdev = dev_get_drvdata(dev);
 	if (!mdev)
