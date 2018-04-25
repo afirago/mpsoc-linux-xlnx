@@ -5,6 +5,7 @@ obj-$(CONFIG_VIDEO_XILINX_AXI4S_SWITCH) += xilinx-axis-switch.o
 obj-$(CONFIG_VIDEO_XILINX_CFA) += xilinx-cfa.o
 obj-$(CONFIG_VIDEO_XILINX_CRESAMPLE) += xilinx-cresample.o
 obj-$(CONFIG_VIDEO_XILINX_CSI2RXSS) += xilinx-csi2rxss.o
+obj-$(CONFIG_VIDEO_XILINX_DUMMY) += xilinx-dummy.o
 obj-$(CONFIG_VIDEO_XILINX_DEMOSAIC) += xilinx-demosaic.o
 obj-$(CONFIG_VIDEO_XILINX_GAMMA) += xilinx-gamma.o
 obj-$(CONFIG_VIDEO_XILINX_HLS) += xilinx-hls.o

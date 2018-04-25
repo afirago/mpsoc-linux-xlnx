@@ -151,4 +151,10 @@ config VIDEO_XILINX_M2M
 	  Driver for Xilinx V4L2 mem2mem pipeline operation to achieve memory
 	  copy between two different physical memories using DMA transfers.
 
+config VIDEO_XILINX_DUMMY
+        tristate "Xilinx dumy Video Source"
+        depends on VIDEO_XILINX
+        ---help---
+           Driver for the Xilinx dummy video source
+
 endif #VIDEO_XILINX
