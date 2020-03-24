@@ -60,3 +60,4 @@ obj-$(CONFIG_ERNIC)		+= xlnx_ernic/
 obj-$(CONFIG_XROE_FRAMER)	+= xroeframer/
 obj-$(CONFIG_XLNX_SYNC)		+= xlnxsync/
 obj-$(CONFIG_XLNX_TSMUX)	+= xlnx_tsmux/
+obj-$(CONFIG_MALI400)	+= mali/
