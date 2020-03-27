@@ -1,0 +1,46 @@
+&amba_pl {
+
+        dummy_5 {
+            compatible = "xlnx,dummy";
+            #address-cells = <0x1>;
+            #size-cells = <0x0>;
+            clocks = <&vid_stream_clk>;
+            reset-gpios = <0x18 0x5c 0x1>;
+            reg = <0x0 0xa02f0400 0x0 0x100>;
+            
+            ports {
+                #address-cells = <0x1>;
+                #size-cells = <0x0>;
+
+                port@0 {
+                    reg = <0x0>;
+                    xlnx,video-format = <0x0>;
+                    xlnx,video-width = <0x8>;
+
+                    hdmi_input_6:endpoint {
+                        remote-endpoint = <&vcap_dev_hdmi_6>;
+                    };
+                };
+            };
+        };
+
+        vcap_hdmi_6 {
+               compatible = "xlnx,video";
+               dmas = <&hdmi_input_v_frmbuf_wr_5 0x0>;
+               dma-names = "port0";
+           
+               ports {
+                   #address-cells = <0x1>;
+                   #size-cells = <0x0>;
+           
+                   port@0 {
+                       reg = <0x0>;
+                       direction = "input";
+           
+                       vcap_dev_hdmi_6:endpoint {
+                           remote-endpoint = <&hdmi_input_6>;
+                       };
+                  };
+              };
+        };
+};

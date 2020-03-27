@@ -1,0 +1,160 @@
+/*
+ * dts file for Xilinx ZynqMP ZCU106 with VCU
+ *
+ * (C) Copyright 2018, Mentor Graphics, Inc.
+ * (C) Copyright 2018, Xilinx, Inc.
+ * 
+ * Alexey Firago <alexey_firago@mentor.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ */
+#include "zynqmp-zcu106-revA.dts"
+
+/* Include DTSIs from TRD */
+#include "vcu_trd/pcw.dtsi"
+#include "vcu_trd/pl.dtsi"
+#include "vcu_trd/vcap-hdmi_2.dtsi"
+#include "vcu_trd/vcap-hdmi_3.dtsi"
+#include "vcu_trd/vcap-hdmi_4.dtsi"
+#include "vcu_trd/vcap-hdmi_5.dtsi"
+#include "vcu_trd/vcap-hdmi_6.dtsi"
+#include "vcu_trd/vcap-hdmi_7.dtsi"
+#include "vcu_trd/li-imx274mipi-fmc.dtsi"
+#include "vcu_trd/hdmi-misc.dtsi"
+#include "vcu_trd/apm.dtsi"
+
+/ {
+	chosen {
+		bootargs = "earlycon clk_ignore_unused consoleblank=0 cma=1700M uio_pdrv_genirq.of_id=generic-uio";
+		stdout-path = "serial0:115200n8";
+	};
+};
+
+&uart1 {
+	status = "disabled";
+};
+
+
+&amba_pl {
+	vid_stream_clk: vid_stream_clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <300000000>;
+	};
+
+	vid_s_axi_clk: vid_s_axi_clk {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <99990000>;
+	};
+};
+
+&i2c1 {
+	i2c-mux@74 {
+		/delete-node/   i2c@2;
+	};
+};
+
+&vid_phy_controller {
+	clock-names = "vid_phy_axi4lite_aclk", "dru-clk";
+	clocks = <&vid_s_axi_clk>, <&si570_2>;
+};
+
+&mpsoc_ss_hdmi_ctrl_iic {
+	clocks = <&vid_s_axi_clk>;
+};
+
+&tpg_port0 {
+	xlnx,video-format = <0x3>;
+};
+
+&hdmi_input_v_hdmi_rx_ss_0 {
+	clock-names = "s_axi_cpu_aclk", "s_axis_video_aclk";
+	clocks = <&vid_s_axi_clk>, <&vid_stream_clk>;
+};
+
+&hdmi_input_v_proc_ss_0 {
+	compatible = "xlnx,v-vpss-scaler-2.2";
+};
+
+&axi_intc_0 {
+	interrupt-parent = <&gic>;
+	interrupts = <0 108 4>;
+};
+
+&hdmi_output_v_hdmi_tx_ss_0 {
+	clock-names = "s_axi_cpu_aclk", "s_axis_video_aclk", "txref-clk", "retimer-clk";
+	clocks = <&vid_s_axi_clk>, <&vid_stream_clk>, <&si5319 0>, <&dp159>;
+};
+
+&hdmi_output_v_mix_0 {
+	/delete-property/ clock-names;
+	clocks = <&si5319 0>;
+	xlnx,dma-addr-width = <64>;
+};
+
+&xx_mix_master {
+	/delete-property/xlnx,layer-streaming;
+	/delete-property/dma-names;
+	/delete-property/dmas;
+};
+
+&sensor_iic_0 {
+	clocks = <&vid_s_axi_clk>;
+};
+
+&mipi_csi2_rx_v_proc_ss_scaler {
+	compatible = "xlnx,v-vpss-scaler-2.2";
+};
+
+&mipi_csi2_rx_v_proc_ss_csc {
+	compatible = "xlnx,v-vpss-csc";
+};
+
+&mipi_csi2_rx_mipi_csi2_rx_subsystem_0 {
+	compatible = "xlnx,mipi-csi2-rx-subsystem-2.0";
+};
+
+&csiss_in {
+	data-lanes = <1 2 3 4>;
+	remote-endpoint = <&sensor_out>;
+};
+
+&hdmi_input_v_frmbuf_wr_0 {
+	xlnx,dma-align = <32>;
+};
+
+&hdmi_input_v_frmbuf_wr_1 {
+	xlnx,dma-align = <32>;
+};
+
+&hdmi_input_v_frmbuf_wr_2 {
+	xlnx,dma-align = <32>;
+};
+
+&hdmi_input_v_frmbuf_wr_3 {
+	xlnx,dma-align = <32>;
+};
+
+&hdmi_input_v_frmbuf_wr_4 {
+	xlnx,dma-align = <32>;
+};
+
+&hdmi_input_v_frmbuf_wr_5 {
+	xlnx,dma-align = <32>;
+};
+
+&hdmi_input_v_frmbuf_wr_6 {
+	xlnx,dma-align = <32>;
+};
+
+&mipi_csi2_rx_v_frmbuf_wr_0 {
+	xlnx,dma-align = <32>;
+};
+
+&tpg_input_v_frmbuf_wr_0 {
+	xlnx,dma-align = <32>;
+};
